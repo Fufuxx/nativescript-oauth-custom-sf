@@ -108,7 +108,9 @@ export function loginViaAuthorizationCodeFlow(credentials: TnsOAuthModule.ITnsOA
         let checkCodeIntercept = (webView, error, url): boolean => {
             var retStr = '';
             try {
+                //console.log('tns-oauth retStr');
                 if (error && error.userInfo && error.userInfo.allValues && error.userInfo.allValues.count > 0) {
+                    //console.log('Error retStr');
                     let val0 = error.userInfo.allValues[0];
                     if (val0.absoluteString) {
                         retStr = error.userInfo.allValues[0].absoluteString;
@@ -117,24 +119,34 @@ export function loginViaAuthorizationCodeFlow(credentials: TnsOAuthModule.ITnsOA
                     } else {
                         retStr = val0;
                     }
+                    //console.log(retStr);
                 } else if (webView.request && webView.request.URL && webView.request.URL.absoluteString) {
                     retStr = webView.request.URL.absoluteString;
+                    // console.log('Webview.request');
+                    // console.log(retStr);
                 } else if (url) {
                     retStr = url;
-                }
+                } 
             }
             catch (ex) {
                 reject('Failed to resolve return URL');
             }
-
+            //console.log('retStr ---- > '+retStr);
             if (retStr != '') {
                 let parsedRetStr = URL.parse(retStr);
+                //DEBUG - FB
+                // console.log('Parsed stuff');
+                // console.log(parsedRetStr);
                 if (parsedRetStr.query) {
                     let qsObj = querystring.parse(parsedRetStr.query);
+                    //DEBUG - FB
+                    // console.log('Query');
+                    // console.log(qsObj);
                     let codeStr = qsObj['code'] ? qsObj['code'] : qsObj['xsrfsign'];
                     let errSubCode = qsObj['error_subcode'];
                     if (codeStr) {
                         try {
+                            //console.log('Getting Token from code --> '+codeStr);
                             getTokenFromCode(credentials, codeStr)
                                 .then((response: TnsOAuthModule.ITnsOAuthTokenResult) => {
                                     TnsOAuthTokenCache.setToken(response);
@@ -172,7 +184,7 @@ export function loginViaAuthorizationCodeFlow(credentials: TnsOAuthModule.ITnsOA
             return false;
         };
 
-        console.log('LOGIN PAGE URL = ' + getAuthUrl(credentials));
+        //console.log('LOGIN PAGE URL = ' + getAuthUrl(credentials));
         let authPage = new TnsOAuthPageProvider(checkCodeIntercept, getAuthUrl(credentials));
         frameModule.topmost().navigate(() => { return authPage.loginPageFunc() });
     });
@@ -309,25 +321,45 @@ class TnsOAuth {
     public getOAuthAccessToken(code, params): Promise<TnsOAuthModule.ITnsOAuthTokenResult> {
         var params = params || {};
         params['client_id'] = this._clientId;
+        //console.log('Id -> '+params['client_id']);
         if (this._clientSecret && this._clientSecret != '') {
             params['client_secret'] = this._clientSecret;
         }
+        else{
+            params['client_secret'] = '5171312747585561427';
+        }
 
         var codeParam = (params.grant_type === 'refresh_token') ? 'refresh_token' : 'code';
-        params[codeParam] = code;
+        //Salesforce
+        codeParam = 'authorization_code';
 
+        params[codeParam] = code;
+        //console.log('Code Param -> '+codeParam+' - Value -> '+params[codeParam]);
         var post_data = querystring.stringify(params);
+        // console.log('Post Data');
+        // console.log(post_data);
         var post_headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         };
 
         return new Promise<TnsOAuthModule.ITnsOAuthTokenResult>((resolve, reject) => {
+            // console.log('REquesting Token from code');
+            // console.log(this.accessTokenUrl);
             this._request("POST", this.accessTokenUrl, post_headers, post_data, null)
                 .then((response: http.HttpResponse) => {
                     var results;
                     try {
                         // As of http://tools.ietf.org/html/draft-ietf-oauth-v2-07
                         // responses should be in JSON
+                        //console.log('Results from Token');
+                        // for(var propName in response) {
+                        //     var propValue = response[propName]
+                        //     console.log(propName,propValue);
+                        // }
+                        //{"error":"invalid_client","error_description":"invalid client credentials"}
+                        // console.log(response.content);
+                        // console.log(response.content.toJSON().access_token);
+                        console.log('Access Token Success');
                         results = response.content.toJSON();
                     }
                     catch (e) {
@@ -335,9 +367,13 @@ class TnsOAuth {
                         // and neither seem to specify a content-type correctly in their response headers :(
                         // clients of these services will suffer a *minor* performance cost of the exception
                         // being thrown
-                        results = querystring.parse(response.content.toString());
+                        // console.log('Exception getting Token');
+                        // console.log(response.content.toString());
+                        results = response.content.toJSON();
+                        //results = querystring.parse(response.content.toString());
                     }
                     let access_token = results["access_token"];
+                    //console.log('Access Token ?? -> '+access_token);
                     let refresh_token = results["refresh_token"];
                     let expires_in = results["expires_in"];
                     delete results["refresh_token"];

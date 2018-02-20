@@ -129,6 +129,7 @@ export function initSalesforce(options: TnsOAuth.ITnsOAuthOptionsSalesforce): Pr
 
 
 export function accessToken(): string {
+    console.log('Access Token -> ', instance.tokenResult);
     return instance.tokenResult.accessToken;
 }
 

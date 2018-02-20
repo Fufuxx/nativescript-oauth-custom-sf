@@ -12,9 +12,15 @@ export class AuthHelper {
     }
 
     public login(successPage?: string): Promise<string> {
+        //DEBUG - FB
+        console.log('Login');
+        console.log(this.credentials);
+        console.log(this.tokenResult);
         return new Promise((resolve, reject) => {
             tnsOauth.loginViaAuthorizationCodeFlow(this.credentials, successPage)
                 .then((response: TnsOAuth.ITnsOAuthTokenResult) => {
+                    //DEBUG - FB
+                    //console.log('Final Response Result Token --- '+response.accessToken);
                     this.tokenResult = response;
                     resolve(response.accessToken);
                 })

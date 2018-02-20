@@ -31,6 +31,9 @@ export class TnsOAuthPageProvider {
         let page = new Page();
         page.content = stack;
 
+        //console.log('Creating Page with Url ---');
+        //console.log(this._authUrl);
+
         wv.src = this._authUrl;
 
         return page;
