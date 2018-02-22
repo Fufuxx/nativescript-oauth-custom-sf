@@ -115,7 +115,9 @@ export function initSalesforce(options: TnsOAuth.ITnsOAuthOptionsSalesforce): Pr
                 options.clientId,
                 options.redirectUri,
                 options.responseType,
-                options.scope
+                options.scope,
+                //Add on Secret Client for Auth
+                options.clientSecret
             );
             resolve(instance);
         } catch (ex) {
@@ -128,12 +130,11 @@ export function initSalesforce(options: TnsOAuth.ITnsOAuthOptionsSalesforce): Pr
 
 
 
-export function accessToken(): string {
-    console.log('Access Token -> ', instance.tokenResult);
-    return instance.tokenResult.accessToken;
+export function accessToken(): any {
+    return instance.tokenResult;
 }
 
-export function login(successPage?: string): Promise<string> {
+export function login(successPage?: string): Promise<any> {
     return instance.login(successPage);
 }
 export function logout(successPage?: string): Promise<void> {
@@ -143,12 +144,12 @@ export function accessTokenExpired(): boolean {
     return instance.accessTokenExpired();
 }
 
-export function ensureValidToken(): Promise<string> {
+export function ensureValidToken(): Promise<any> {
     return new Promise((resolve, reject) => {
         if (instance.accessTokenExpired()) {
             if (instance.refreshTokenExpired()) {
                 login()
-                    .then((response: string) => {
+                    .then((response: any) => {
                         resolve(response);
                     })
                     .catch((er) => {
@@ -156,7 +157,7 @@ export function ensureValidToken(): Promise<string> {
                     });
             } else {
                 instance.refreshToken()
-                    .then((result: string) => {
+                    .then((result: any) => {
                         resolve(result);
                     })
                     .catch((er) => {

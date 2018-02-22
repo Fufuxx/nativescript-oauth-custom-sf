@@ -104,13 +104,11 @@ export function getTokenFromCache() {
 export function loginViaAuthorizationCodeFlow(credentials: TnsOAuthModule.ITnsOAuthCredentials, successPage?: string): Promise<TnsOAuthModule.ITnsOAuthTokenResult> {
     return new Promise((resolve, reject) => {
         var navCount = 0;
-
         let checkCodeIntercept = (webView, error, url): boolean => {
             var retStr = '';
             try {
-                //console.log('tns-oauth retStr');
+                console.log('tns-oauth retStr');
                 if (error && error.userInfo && error.userInfo.allValues && error.userInfo.allValues.count > 0) {
-                    //console.log('Error retStr');
                     let val0 = error.userInfo.allValues[0];
                     if (val0.absoluteString) {
                         retStr = error.userInfo.allValues[0].absoluteString;
@@ -119,11 +117,11 @@ export function loginViaAuthorizationCodeFlow(credentials: TnsOAuthModule.ITnsOA
                     } else {
                         retStr = val0;
                     }
-                    //console.log(retStr);
                 } else if (webView.request && webView.request.URL && webView.request.URL.absoluteString) {
                     retStr = webView.request.URL.absoluteString;
-                    // console.log('Webview.request');
-                    // console.log(retStr);
+                } else if (webView.URL && webView.URL.absoluteString) {
+                    //console.log('Webview Url -> '+webView.URL.absoluteString);
+                    retStr = webView.URL.absoluteString;
                 } else if (url) {
                     retStr = url;
                 } 
@@ -131,22 +129,15 @@ export function loginViaAuthorizationCodeFlow(credentials: TnsOAuthModule.ITnsOA
             catch (ex) {
                 reject('Failed to resolve return URL');
             }
-            //console.log('retStr ---- > '+retStr);
+
             if (retStr != '') {
                 let parsedRetStr = URL.parse(retStr);
-                //DEBUG - FB
-                // console.log('Parsed stuff');
-                // console.log(parsedRetStr);
                 if (parsedRetStr.query) {
                     let qsObj = querystring.parse(parsedRetStr.query);
-                    //DEBUG - FB
-                    // console.log('Query');
-                    // console.log(qsObj);
                     let codeStr = qsObj['code'] ? qsObj['code'] : qsObj['xsrfsign'];
                     let errSubCode = qsObj['error_subcode'];
                     if (codeStr) {
                         try {
-                            //console.log('Getting Token from code --> '+codeStr);
                             getTokenFromCode(credentials, codeStr)
                                 .then((response: TnsOAuthModule.ITnsOAuthTokenResult) => {
                                     TnsOAuthTokenCache.setToken(response);
@@ -167,8 +158,6 @@ export function loginViaAuthorizationCodeFlow(credentials: TnsOAuthModule.ITnsOA
                                 });
 
                         } catch (er) {
-                            console.error('getOAuthAccessToken error occurred...');
-                            console.dir(er);
                             reject(er);
                         }
                         return true;
@@ -204,8 +193,8 @@ export function refreshToken(credentials: TnsOAuthModule.ITnsOAuthCredentials): 
                     reject(er);
                 });
         } catch (er) {
-            console.error('refreshToken error occurred...');
-            console.dir(er);
+            //console.error('refreshToken error occurred...');
+            //console.dir(er);
             reject(er);
         }
     });
@@ -321,29 +310,29 @@ class TnsOAuth {
     public getOAuthAccessToken(code, params): Promise<TnsOAuthModule.ITnsOAuthTokenResult> {
         var params = params || {};
         params['client_id'] = this._clientId;
-        //console.log('Id -> '+params['client_id']);
+
         if (this._clientSecret && this._clientSecret != '') {
             params['client_secret'] = this._clientSecret;
         }
-        else{
-            params['client_secret'] = '5171312747585561427';
-        }
 
-        var codeParam = (params.grant_type === 'refresh_token') ? 'refresh_token' : 'code';
+        //Not sure what that was about - either take refresh_token or autorization_code -> Fine for Salesfsorce
+        //var codeParam = (params.grant_type === 'refresh_token') ? 'refresh_token' : 'code';
         //Salesforce
-        codeParam = 'authorization_code';
+        //codeParam = 'authorization_code';
 
+        var codeParam = params.grant_type;
         params[codeParam] = code;
+
         //console.log('Code Param -> '+codeParam+' - Value -> '+params[codeParam]);
         var post_data = querystring.stringify(params);
-        // console.log('Post Data');
+        //console.log('Post Data');
         // console.log(post_data);
         var post_headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         };
 
         return new Promise<TnsOAuthModule.ITnsOAuthTokenResult>((resolve, reject) => {
-            // console.log('REquesting Token from code');
+            //console.log('Requesting Token from code');
             // console.log(this.accessTokenUrl);
             this._request("POST", this.accessTokenUrl, post_headers, post_data, null)
                 .then((response: http.HttpResponse) => {
@@ -357,9 +346,10 @@ class TnsOAuth {
                         //     console.log(propName,propValue);
                         // }
                         //{"error":"invalid_client","error_description":"invalid client credentials"}
-                        // console.log(response.content);
-                        // console.log(response.content.toJSON().access_token);
-                        console.log('Access Token Success');
+                        //console.log(response.content);
+                        //console.log(response.content.toJSON().access_token);
+
+                        //console.log('Access Token Success');
                         results = response.content.toJSON();
                     }
                     catch (e) {
@@ -373,7 +363,8 @@ class TnsOAuth {
                         //results = querystring.parse(response.content.toString());
                     }
                     let access_token = results["access_token"];
-                    //console.log('Access Token ?? -> '+access_token);
+                    let instance_url = results["instance_url"];
+                    console.log('Instance Url ? -> '+results["instance_url"]);
                     let refresh_token = results["refresh_token"];
                     let expires_in = results["expires_in"];
                     delete results["refresh_token"];
@@ -386,7 +377,8 @@ class TnsOAuth {
                         accessToken: access_token,
                         refreshToken: refresh_token,
                         accessTokenExpiration: expDate,
-                        refreshTokenExpiration: expDate
+                        refreshTokenExpiration: expDate,
+                        instance_url: instance_url
                     };
 
                     resolve(tokenResult);

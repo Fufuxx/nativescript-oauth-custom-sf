@@ -11,18 +11,13 @@ export class AuthHelper {
         this.tokenResult = tnsOauth.getTokenFromCache();
     }
 
-    public login(successPage?: string): Promise<string> {
-        //DEBUG - FB
-        console.log('Login');
-        console.log(this.credentials);
-        console.log(this.tokenResult);
+    public login(successPage?: string): Promise<any> {
         return new Promise((resolve, reject) => {
+            console.log(' === Starting off flow ===');
             tnsOauth.loginViaAuthorizationCodeFlow(this.credentials, successPage)
                 .then((response: TnsOAuth.ITnsOAuthTokenResult) => {
-                    //DEBUG - FB
-                    //console.log('Final Response Result Token --- '+response.accessToken);
                     this.tokenResult = response;
-                    resolve(response.accessToken);
+                    resolve(response);
                 })
                 .catch((er) => {
                     reject(er);
@@ -30,12 +25,12 @@ export class AuthHelper {
         });
     }
 
-    public refreshToken(): Promise<string> {
+    public refreshToken(): Promise<any> {
         return new Promise((resolve, reject) => {
             tnsOauth.refreshToken(this.credentials)
                 .then((response: TnsOAuth.ITnsOAuthTokenResult) => {
                     this.tokenResult = response;
-                    resolve(response.accessToken);
+                    resolve(response);
                 })
                 .catch((er) => {
                     reject(er);

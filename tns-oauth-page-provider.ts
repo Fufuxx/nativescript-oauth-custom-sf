@@ -7,7 +7,6 @@ import { WebView } from 'ui/web-view';
 //import { TnsOAuthWebViewDelegateImpl } from './tns-oauth-webview';
 import { TnsOAuthWebViewHelper } from './tns-oauth-webview-helper';
 
-
 export class TnsOAuthPageProvider {
     private _checkCodeIntercept: (WebView, error?, url?) => boolean;
     private _authUrl: string;
@@ -31,8 +30,7 @@ export class TnsOAuthPageProvider {
         let page = new Page();
         page.content = stack;
 
-        //console.log('Creating Page with Url ---');
-        //console.log(this._authUrl);
+        console.log('==== Creating Page =====');
 
         wv.src = this._authUrl;
 

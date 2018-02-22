@@ -45,8 +45,6 @@ export class AuthHelperSalesforce extends AuthHelper implements TnsOAuth.ITnsAut
                 //'Host': URL.parse(revoke_url, true),
                 'Content-Type': 'application/x-www-form-urlencoded'
             };
-
-            console.log('Refresh Token -> '+this.tokenResult.refreshToken);
             var post_body = querystring.stringify({token: this.tokenResult.refreshToken});
 
             http.request({

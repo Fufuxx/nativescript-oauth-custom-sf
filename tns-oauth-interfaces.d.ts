@@ -31,6 +31,7 @@ export interface ITnsOAuthCredentialsUaa extends ITnsOAuthCredentials {
 export interface ITnsOAuthTokenResult {
     accessToken: string;
     refreshToken: string;
+    instance_url: string;
     accessTokenExpiration: Date;
     refreshTokenExpiration: Date;
 }
@@ -67,4 +68,5 @@ export interface ITnsOAuthOptionsSalesforce extends ITnsOAuthOptions {
     authority: string;
     redirectUri: string;
     responseType: string;
+    clientSecret: string;
 }
